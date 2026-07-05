@@ -25,19 +25,16 @@ pipeline {
             steps {
                 echo 'Iniciando compilacao da aplicacao...'
                 script {
-                    // Verifica a tecnologia do projeto e executa o build adequado
                     // O MobEAD e um projeto estatico com Dockerfile nginx
                     if (fileExists('package.json')) {
-                        bat 'npm install'
-                        bat 'npm run build'
+                        sh 'npm install'
+                        sh 'npm run build'
                     } else if (fileExists('pom.xml')) {
-                        bat 'mvn clean package -DskipTests'
+                        sh 'mvn clean package -DskipTests'
                     } else if (fileExists('*.csproj') || fileExists('*.sln')) {
-                        bat 'dotnet build'
+                        sh 'dotnet build'
                     } else {
                         echo 'Build padrao: projeto estatico MobEAD com Dockerfile nginx'
-                        // Build da imagem Docker para MobEAD
-                        bat 'docker build -t mobead-app:latest .'
                     }
                 }
             }
@@ -48,11 +45,11 @@ pipeline {
                 echo 'Executando testes automatizados...'
                 script {
                     if (fileExists('package.json')) {
-                        bat 'npm test || echo Testes nao configurados ou falha tolerada'
+                        sh 'npm test || echo "Testes nao configurados ou falha tolerada"'
                     } else if (fileExists('pom.xml')) {
-                        bat 'mvn test || echo Testes nao configurados ou falha tolerada'
+                        sh 'mvn test || echo "Testes nao configurados ou falha tolerada"'
                     } else if (fileExists('*.csproj')) {
-                        bat 'dotnet test || echo Testes nao configurados ou falha tolerada'
+                        sh 'dotnet test || echo "Testes nao configurados ou falha tolerada"'
                     } else {
                         echo 'Nenhum framework de teste identificado. Stage simulado para projeto estatico.'
                     }
@@ -66,12 +63,12 @@ pipeline {
                 script {
                     def scannerHome = tool 'SonarScanner'
                     withSonarQubeEnv('SonarQube') {
-                        bat """
-                            ${scannerHome}\\bin\\sonar-scanner.bat ^
-                            -Dsonar.projectKey=MobEAD-IcaroGalvao ^
-                            -Dsonar.projectName="MobEAD - Icaro Galvao do Nascimento" ^
-                            -Dsonar.sources=. ^
-                            -Dsonar.host.url=${SONARQUBE_URL} ^
+                        sh """
+                            ${scannerHome}/bin/sonar-scanner \
+                            -Dsonar.projectKey=MobEAD-IcaroGalvao \
+                            -Dsonar.projectName='MobEAD - Icaro Galvao do Nascimento' \
+                            -Dsonar.sources=. \
+                            -Dsonar.host.url=${SONARQUBE_URL} \
                             -Dsonar.login=${SONAR_TOKEN}
                         """
                     }
@@ -92,11 +89,9 @@ pipeline {
             steps {
                 echo 'Realizando deploy no ambiente de DESENVOLVIMENTO...'
                 script {
-                    // Criar diretorio de deploy
-                    bat 'if not exist C:\\mobead-dev mkdir C:\\mobead-dev'
-                    bat 'xcopy . C:\\mobead-dev\\ /E /I /Y /EXCLUDE:.gitignore'
-                    // Iniciar container Docker para desenvolvimento
-                    bat 'docker run -d -p 8081:80 --name mobead-dev mobead-app:latest'
+                    sh 'mkdir -p /tmp/mobead-dev'
+                    sh 'cp -r . /tmp/mobead-dev/ || true'
+                    sh 'nohup python3 -m http.server ${DEV_PORT} --directory /tmp/mobead-dev > /tmp/dev-server.log 2>&1 &'
                     echo "Aplicacao de desenvolvimento disponivel em http://localhost:${DEV_PORT}"
                 }
             }
@@ -118,11 +113,9 @@ pipeline {
             steps {
                 echo 'Realizando deploy no ambiente de PRODUCAO...'
                 script {
-                    // Criar diretorio de deploy
-                    bat 'if not exist C:\\mobead-prod mkdir C:\\mobead-prod'
-                    bat 'xcopy . C:\\mobead-prod\\ /E /I /Y /EXCLUDE:.gitignore'
-                    // Iniciar container Docker para producao
-                    bat 'docker run -d -p 8082:80 --name mobead-prod mobead-app:latest'
+                    sh 'mkdir -p /tmp/mobead-prod'
+                    sh 'cp -r . /tmp/mobead-prod/ || true'
+                    sh 'nohup python3 -m http.server ${PROD_PORT} --directory /tmp/mobead-prod > /tmp/prod-server.log 2>&1 &'
                     echo "Aplicacao de producao disponivel em http://localhost:${PROD_PORT}"
                 }
             }
