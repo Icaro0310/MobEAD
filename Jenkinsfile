@@ -63,14 +63,7 @@ pipeline {
                 script {
                     def scannerHome = tool 'SonarScanner'
                     withSonarQubeEnv('SonarQube') {
-                        sh """
-                            ${scannerHome}/bin/sonar-scanner \
-                            -Dsonar.projectKey=MobEAD-IcaroGalvao \
-                            -Dsonar.projectName='MobEAD - Icaro Galvao do Nascimento' \
-                            -Dsonar.sources=. \
-                            -Dsonar.host.url=${SONARQUBE_URL} \
-                            -Dsonar.login=${SONAR_TOKEN}
-                        """
+                        sh "${scannerHome}/bin/sonar-scanner"
                     }
                 }
             }
