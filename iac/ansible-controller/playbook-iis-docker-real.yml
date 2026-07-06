@@ -1,0 +1,89 @@
+---
+- name: Provisionar servidor IIS via Docker (Ansible Real - Linux Container)
+  hosts: localhost
+  connection: local
+  gather_facts: true
+
+  vars:
+    container_name: unylea-iis
+    image_name: unylea-iis
+    image_tag: latest
+    host_port: 8090
+    container_port: 80
+
+  tasks:
+    - name: Verificar se Docker esta instalado
+      ansible.builtin.command: docker --version
+      register: docker_version
+      changed_when: false
+
+    - name: Exibir versao do Docker
+      ansible.builtin.debug:
+        var: docker_version.stdout
+
+    - name: Verificar se imagem Docker ja existe
+      ansible.builtin.command: docker images -q {{ image_name }}:{{ image_tag }}
+      register: image_exists
+      changed_when: false
+
+    - name: Construir imagem Docker do servidor IIS
+      ansible.builtin.command: >
+        docker build -t {{ image_name }}:{{ image_tag }}
+        /workspace/docker-final
+      register: build_result
+      changed_when: image_exists.stdout == ""
+      when: image_exists.stdout == ""
+
+    - name: Verificar se container ja existe
+      ansible.builtin.command: docker ps -aq -f name={{ container_name }}
+      register: container_exists
+      changed_when: false
+
+    - name: Parar container existente
+      ansible.builtin.command: docker rm -f {{ container_name }}
+      when: container_exists.stdout != ""
+      changed_when: true
+      failed_when: false
+
+    - name: Iniciar container IIS
+      ansible.builtin.command: >
+        docker run -d
+        --name {{ container_name }}
+        -p {{ host_port }}:{{ container_port }}
+        --restart unless-stopped
+        {{ image_name }}:{{ image_tag }}
+      register: run_result
+      changed_when: run_result.rc == 0
+
+    - name: Aguardar container ficar pronto
+      ansible.builtin.wait_for:
+        host: "host.docker.internal"
+        port: "{{ host_port }}"
+        timeout: 60
+
+    - name: Validar HTTP - pagina principal
+      ansible.builtin.uri:
+        url: "http://host.docker.internal:{{ host_port }}"
+        return_content: true
+      register: http_result
+
+    - name: Validar status HTTP 200
+      ansible.builtin.assert:
+        that:
+          - http_result.status == 200
+          - "'Unylea DevOps' in http_result.content"
+        fail_msg: "Servidor IIS nao esta respondendo"
+        success_msg: "Servidor IIS funcionando!"
+
+    - name: Exibir resumo final
+      ansible.builtin.debug:
+        msg:
+          - "========================================="
+          - "  SERVIDOR IIS - UNYLEA DEVOPS - U4"
+          - "========================================="
+          - "Aluno: Icaro Galvao do Nascimento"
+          - "Container: {{ container_name }}"
+          - "URL: http://localhost:{{ host_port }} (host.docker.internal:{{ host_port }} no container)"
+          - "Status: {{ http_result.status }}"
+          - "Configurado via: Ansible REAL (container Linux)"
+          - "========================================="

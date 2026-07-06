@@ -1,0 +1,116 @@
+---
+# Playbook Ansible REAL - Configurar IIS via Docker
+# Aluno: Icaro Galvao do Nascimento
+# Unylea | Engenheiro DevOps | Unidade 4
+#
+# Este playbook usa Ansible REAL (nao simulado) para:
+# 1. Construir imagem Docker com Nginx (simulando IIS)
+# 2. Iniciar container
+# 3. Validar HTTP
+# 4. Garantir idempotencia
+#
+# Requisito: Ansible instalado (ansible-core)
+# Execucao: ansible-playbook -i inventory-docker.ini playbook-iis-docker-real.yml -v
+
+- name: Provisionar servidor IIS via Docker (Ansible Real)
+  hosts: localhost
+  connection: local
+  gather_facts: true
+
+  vars:
+    container_name: unylea-iis
+    image_name: unylea-iis
+    image_tag: latest
+    host_port: 8090
+    container_port: 80
+    project_dir: "{{ playbook_dir }}/../docker-final"
+
+  tasks:
+    - name: Verificar se Docker esta instalado
+      ansible.builtin.command: docker --version
+      register: docker_version
+      changed_when: false
+
+    - name: Exibir versao do Docker
+      ansible.builtin.debug:
+        var: docker_version.stdout
+
+    - name: Verificar se imagem Docker ja existe
+      ansible.builtin.command: docker images -q {{ image_name }}:{{ image_tag }}
+      register: image_exists
+      changed_when: false
+
+    - name: Construir imagem Docker do servidor IIS
+      ansible.builtin.command: >
+        docker build -t {{ image_name }}:{{ image_tag }} .
+      args:
+        chdir: "{{ project_dir }}"
+      register: build_result
+      changed_when: image_exists.stdout == ""
+      when: image_exists.stdout == ""
+
+    - name: Verificar se container ja existe
+      ansible.builtin.command: docker ps -aq -f name={{ container_name }}
+      register: container_exists
+      changed_when: false
+
+    - name: Parar container existente (se houver)
+      ansible.builtin.command: docker rm -f {{ container_name }}
+      when: container_exists.stdout != ""
+      changed_when: true
+      failed_when: false
+
+    - name: Iniciar container IIS
+      ansible.builtin.command: >
+        docker run -d
+        --name {{ container_name }}
+        -p {{ host_port }}:{{ container_port }}
+        --restart unless-stopped
+        {{ image_name }}:{{ image_tag }}
+      register: run_result
+      changed_when: "'started' in run_result.stdout or run_result.rc == 0"
+
+    - name: Aguardar container ficar pronto
+      ansible.builtin.wait_for:
+        host: localhost
+        port: "{{ host_port }}"
+        timeout: 30
+        msg: "Container IIS nao ficou pronto na porta {{ host_port }}"
+
+    - name: Validar HTTP - pagina principal
+      ansible.builtin.uri:
+        url: "http://localhost:{{ host_port }}"
+        return_content: true
+      register: http_result
+
+    - name: Validar status HTTP 200
+      ansible.builtin.assert:
+        that:
+          - http_result.status == 200
+          - "'Unylea DevOps' in http_result.content"
+        fail_msg: "Servidor IIS nao esta respondendo corretamente"
+        success_msg: "Servidor IIS funcionando perfeitamente!"
+
+    - name: Validar endpoint /status
+      ansible.builtin.uri:
+        url: "http://localhost:{{ host_port }}/status"
+        return_content: true
+      register: status_result
+
+    - name: Exibir status do servidor
+      ansible.builtin.debug:
+        msg: "Status: {{ status_result.json.status }} | Projeto: {{ status_result.json.project }}"
+
+    - name: Exibir resumo final
+      ansible.builtin.debug:
+        msg:
+          - "========================================="
+          - "  SERVIDOR IIS - UNYLEA DEVOPS - U4"
+          - "========================================="
+          - "Aluno: Icaro Galvao do Nascimento"
+          - "Container: {{ container_name }}"
+          - "URL: http://localhost:{{ host_port }}"
+          - "Status: {{ http_result.status }}"
+          - "Imagem: {{ image_name }}:{{ image_tag }}"
+          - "Configurado via: Ansible (real)"
+          - "========================================="
