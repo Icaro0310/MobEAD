@@ -1,0 +1,135 @@
+﻿---
+# Playbook Ansible para Docker SimulaÃ§Ã£o
+# Configura containers Docker
+
+- name: Verificar ambiente Docker
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  tasks:
+    - name: Verificar Docker
+      command: docker --version
+      register: docker_version
+      failed_when: docker_version.rc != 0
+
+    - name: Verificar Docker Compose
+      command: docker-compose --version
+      register: compose_version
+      failed_when: compose_version.rc != 0
+
+    - name: Exibir informaÃ§Ãµes
+      debug:
+        msg: "Docker: {{ docker_version.stdout }}, Docker Compose: {{ compose_version.stdout }}"
+
+- name: Iniciar ambiente Docker
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  tasks:
+    - name: Subir containers Docker
+      command: docker-compose up -d
+      args:
+        chdir: "{{ playbook_dir }}"
+      register: docker_up
+
+    - name: Aguardar containers iniciarem
+      pause:
+        seconds: 30
+
+    - name: Verificar containers
+      command: docker ps
+      register: containers_status
+
+    - name: Exibir containers
+      debug:
+        msg: "{{ containers_status.stdout_lines }}"
+
+    - name: Testar servidor IIS
+      uri:
+        url: http://localhost:8080
+        method: GET
+      register: iis_test
+      failed_when: iis_test.status != 200
+
+    - name: Exibir status do servidor
+      debug:
+        msg: "âœ… Servidor IIS funcionando: http://localhost:8080"
+
+- name: Configurar Ansible Controller
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  tasks:
+    - name: Verificar Ansible Controller
+      command: docker exec ansible-unylea-controller ansible --version
+      register: ansible_version
+      failed_when: ansible_version.rc != 0
+
+    - name: Exibir versÃ£o Ansible
+      debug:
+        msg: "Ansible Controller: {{ ansible_version.stdout }}"
+
+- name: Configurar Terraform Controller
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  tasks:
+    - name: Verificar Terraform Controller
+      command: docker exec terraform-unylea-controller terraform version
+      register: terraform_version
+      failed_when: terraform_version.rc != 0
+
+    - name: Exibir versÃ£o Terraform
+      debug:
+        msg: "Terraform Controller: {{ terraform_version.stdout }}"
+
+- name: Verificar logs dos serviÃ§os
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  tasks:
+    - name: Verificar log do IIS
+      command: docker logs vm-unylea-winserver-2019 --tail 10
+      register: iis_logs
+
+    - name: Exibir logs IIS
+      debug:
+        msg: "Logs IIS: {{ iis_logs.stdout_lines }}"
+
+    - name: Verificar log do Nginx
+      command: docker logs nginx-unylea-proxy --tail 5
+      register: nginx_logs
+
+    - name: Exibir logs Nginx
+      debug:
+        msg: "Logs Nginx: {{ nginx_logs.stdout_lines }}"
+
+- name: Exibir informaÃ§Ãµes finais
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  tasks:
+    - name: Mensagem de sucesso
+      debug:
+        msg: |
+          ðŸŽ‰ AMBIENTE CONFIGURADO COM SUCESSO!
+          
+          ðŸŒ URLs de Acesso:
+          - Servidor IIS: http://localhost:8080
+          - Proxy Nginx: http://localhost
+          - Ansible Controller: ssh root@localhost -p 2222
+          
+          ðŸ³ Containers Ativos:
+          - vm-unylea-winserver-2019 (Windows Server + IIS)
+          - ansible-unylea-controller (Ansible)
+          - terraform-unylea-controller (Terraform)
+          - nginx-unylea-proxy (Proxy Reverso)
+          
+          ðŸ“‹ Comandos Ãšteis:
+          - docker ps (ver containers)
+          - docker logs [container] (ver logs)
+          - docker-compose down (parar tudo)
+          - docker-compose up -d (reiniciar)
+          
+          âœ… Projeto Unylea DevOps - Unidade 4
+          Aluno: Icaro Galvao do Nascimento

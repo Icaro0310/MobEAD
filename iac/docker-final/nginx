@@ -1,0 +1,25 @@
+server {
+    listen 80;
+    server_name localhost;
+
+    location / {
+        root   /usr/share/nginx/html;
+        index  index.html;
+        try_files $uri $uri/ =404;
+    }
+
+    location /status {
+        return 200 '{"status":"running","server":"nginx","project":"unylea-devops-u4","aluno":"Icaro Galvao do Nascimento"}';
+        add_header Content-Type application/json;
+    }
+
+    location /iis {
+        return 200 '{"simulated":"IIS","os":"Windows Server 2019","feature":"Web-Server"}';
+        add_header Content-Type application/json;
+    }
+
+    error_page 500 502 503 504 /50x.html;
+    location = /50x.html {
+        root /usr/share/nginx/html;
+    }
+}

@@ -1,0 +1,179 @@
+﻿---
+# Playbook Ansible para Vagrant + Windows Server 2019
+# Instala e configura IIS no Windows Server local
+
+- name: Verificar conexÃ£o com Windows Server
+  hosts: windows
+  gather_facts: no
+  tasks:
+    - name: Testar conexÃ£o WinRM
+      win_ping:
+      register: ping_result
+      failed_when: ping_result.failed
+
+- name: Exibir informaÃ§Ãµes do sistema
+      debug:
+        msg: "Sistema operacional: {{ ansible_os_family }} {{ ansible_distribution }} {{ ansible_version }}"
+
+- name: Verificar status do IIS
+      win_service_info:
+        name: W3SVC
+      register: iis_status
+
+- name: Garantir que IIS estÃ¡ instalado
+      win_feature:
+        name: Web-Server
+        state: present
+        include_management_tools: yes
+      register: iis_install
+
+- name: Iniciar serviÃ§o W3SVC
+      win_service:
+        name: W3SVC
+        state: started
+        register: iis_start
+
+- name: Configurar firewall para HTTP
+      win_firewall_rule:
+        name: HTTP
+        enable: yes
+        state: present
+        localport: 80
+        action: Allow
+        direction: Inbound
+        protocol: TCP
+
+- name: Configurar firewall para HTTPS
+      win_firewall_rule:
+        name: HTTPS
+        enable: yes
+        state: present
+        localport: 443
+        action: Allow
+        direction: Inbound
+        protocol: TCP
+
+- name: Criar pÃ¡gina HTML personalizada
+      win_copy:
+        content: |
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <title>Servidor IIS - Unylea DevOps</title>
+              <style>
+                  body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; min-height: 100vh; }
+                  .container { background: rgba(255,255,255,0.1); padding: 30px; border-radius: 10px; backdrop-filter: blur(10px); max-width: 800px; margin: 0 auto; }
+                  h1 { color: #ffffff; font-size: 2.5em; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+                  .info { background: rgba(255,255,255,0.2); padding: 20px; margin: 20px 0; border-radius: 5px; }
+                  .tech { background: rgba(76, 175, 80, 0.3); padding: 10px; border-radius: 5px; display: inline-block; margin: 5px; }
+                  .ansible { background: rgba(255, 193, 7, 0.3); padding: 10px; border-radius: 5px; margin: 20px 0; }
+                  .vagrant { background: rgba(33, 150, 243, 0.3); padding: 15px; border-radius: 5px; margin: 20px 0; }
+                  .status { background: rgba(255, 193, 7, 0.3); padding: 15px; border-radius: 5px; margin: 20px 0; }
+              </style>
+          </head>
+          <body>
+              <div class="container">
+                  <h1>ðŸŽ‰ Servidor IIS Configurado via Ansible!</h1>
+                  <div class="info">
+                      <h2>Unylea | Engenheiro DevOps | Unidade 4</h2>
+                      <p><strong>Aluno:</strong> Icaro Galvao do Nascimento</p>
+                      <p><strong>Ferramentas:</strong> Terraform + Ansible + Vagrant</p>
+                      <p><strong>Plataforma:</strong> Windows Server 2019 + IIS</p>
+                      <p><strong>Status:</strong> âœ… Configurado via Ansible</p>
+                      <div>
+                          <span class="tech">ðŸ–¥ï¸ Windows Server 2019</span>
+                          <span class="tech">ðŸŒ IIS</span>
+                          <span class="tech">ðŸ”§ Ansible</span>
+                          <span class="tech">ðŸ“¦ Vagrant</span>
+                      </div>
+                  </div>
+                  <div class="ansible">
+                      <h3>ðŸ”§ AutomaÃ§Ã£o Ansible</h3>
+                      <p><strong>Playbook executado com sucesso</strong></p>
+                      <p>ConfiguraÃ§Ã£o automÃ¡tica via YAML</p>
+                      <p>Infraestrutura como CÃ³digo</p>
+                  </div>
+                  <div class="vagrant">
+                      <h3>ðŸ“¦ Ambiente Local</h3>
+                      <p><strong>Vagrant + VirtualBox</strong></p>
+                      <p>100% gratuito e offline</p>
+                      <p>Controle total da infraestrutura</p>
+                  </div>
+                  <div class="status">
+                      <h3>âœ… Status: Servidor Ativo</h3>
+                      <p>IIS funcionando perfeitamente</p>
+                      <p>Ansible conectado via WinRM</p>
+                      <p>Pronto para aplicaÃ§Ãµes</p>
+                  </div>
+                  <p><em>Provisionado via Ansible + Vagrant</em></p>
+                  <p><small>Infraestrutura como CÃ³digo - IaC HÃ­brido</small></p>
+              </div>
+          </body>
+          </html>
+        dest: C:\inetpub\wwwroot\index-ansible.html
+
+- name: Verificar acesso ao site
+      uri:
+        url: http://localhost
+        method: GET
+      register: website_check
+      failed_when: website_check.status != 200
+
+- name: Exibir informaÃ§Ãµes finais
+      debug:
+        msg: "=== SERVIDOR CONFIGURADO COM SUCESSO ==="
+      debug:
+        msg: "ðŸŒ Acesse: http://localhost:8080"
+      debug:
+        msg: "ðŸ–¥ï¸ RDP: mstsc /v:localhost:3389"
+      debug:
+        msg: "ðŸ”§ WinRM: http://localhost:5985"
+      debug:
+        msg: "ðŸ“‹ Playbook executado: {{ ansible_playbook_python }}"
+      debug:
+        msg: "ðŸŽ¯ Status: IIS funcionando perfeitamente!"
+
+- name: Criar script de verificaÃ§Ã£o contÃ­nuo
+      win_copy:
+        content: |
+          # Script de verificaÃ§Ã£o contÃ­nuo
+          $logFile = "C:\ansible-status.log"
+          $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+          
+          Add-Content -Path $logFile -Value "$timestamp - VerificaÃ§Ã£o Ansible IIS" -Force
+          Add-Content -Path $logFile -Value "========================================" -Force
+          
+          # Verificar status do IIS
+          $iisStatus = Get-Service W3SVC | Select-Object Status, Name
+          Add-Content -Path $logFile -Value "IIS Status: $iisStatus" -Force
+          
+          # Verificar WinRM
+          try {
+              $winrmTest = Test-WSMan -ComputerName localhost -Port 5985 -Http -Authentication Basic -Credential (New-Object System.Management.Automation.PSCredential("vagrant", "Unylea@2024!DevOps"))
+              Add-Content -Path $logFile -Value "WinRM Status: Conectado" -Force
+          } catch {
+              Add-Content -Path $logFile -Value "WinRM Status: Erro de conexÃ£o" -Force
+          }
+          
+          # Verificar site
+          try {
+              $siteTest = Invoke-WebRequest -Uri "http://localhost" -UseBasicParsing $true
+              Add-Content -Path $logFile -Value "Site Status: $($siteTest.StatusCode)" -Force
+          } catch {
+              Add-Content -Path $logFile -Value "Site Status: Erro de conexÃ£o" -Force
+          }
+          
+          Add-Content -Path $logFile -Value "========================================" -Force
+          Add-Content -Path $logFile -Value "PrÃ³xima verificaÃ§Ã£o em 5 minutos..." -Force
+        dest: C:\check-ansible-continuous.ps1
+
+- name: Agendar verificaÃ§Ã£o contÃ­nua
+      win_scheduled_task:
+        name: "Ansible-IIS-Check"
+        description: "VerificaÃ§Ã£o contÃ­nua do servidor IIS via Ansible"
+        command: powershell -ExecutionPolicy Bypass -File C:\check-ansible-continuous.ps1
+        trigger_type: time
+        start_when: S-00:00
+        repetition_type: daily
+        enabled: yes
+        state: present

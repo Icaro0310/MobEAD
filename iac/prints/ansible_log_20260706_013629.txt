@@ -1,0 +1,48 @@
+﻿============================================================
+PLAY [Provisionar servidor IIS via Docker] ******************
+============================================================
+
+TASK [Verificar se Docker esta instalado] *******************
+[01:36:33] ok: [localhost - Docker version 29.6.1, build 8900f1d]
+
+TASK [Construir imagem Docker do servidor IIS] *************
+[01:36:49] changed: [localhost - Imagem unylea-iis:latest construida com sucesso]
+
+TASK [Parar container existente (se houver)] ***************
+[01:36:54] ok: [localhost - Container removido (se existia)]
+
+TASK [Iniciar container IIS] *******************************
+[01:37:01] changed: [localhost - Container unylea-iis iniciado]
+
+TASK [Aguardar container ficar pronto] *********************
+[01:37:04] ok: [localhost - Container pronto (porta 8090)]
+
+TASK [Validar HTTP - pagina principal] *********************
+[01:37:04] ok: [localhost - Status: 200 | Conteudo valido]
+
+TASK [Validar endpoint /status] ****************************
+[01:37:04] ok: [localhost - status=running project=unylea-devops-u4]
+
+TASK [Exibir resumo final] *********************************
+ok: [localhost] => {
+    "msg": [
+        "=========================================",
+        "  SERVIDOR IIS - UNYLEA DEVOPS - U4",
+        "=========================================",
+        "Aluno: Icaro Galvao do Nascimento",
+        "Container: unylea-iis",
+        "URL: http://localhost:8090",
+        "Status: 200",
+        "Imagem: unylea-iis:latest",
+        "========================================="
+    ]
+}
+
+============================================================
+PLAY RECAP *************************************************
+============================================================
+localhost                  : ok=8    changed=2    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+============================================================
+
+Ô£à PLAYBOOK EXECUTADO COM SUCESSO!
+­ƒîÉ Acesse: http://localhost:8090

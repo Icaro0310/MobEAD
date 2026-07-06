@@ -1,0 +1,80 @@
+﻿# Script para capturar print da tela automaticamente
+# Usa .NET para screenshot direto do navegador
+
+Add-Type -AssemblyName System.Windows.Forms
+Add-Type -AssemblyName System.Drawing
+
+# Criar pasta de prints
+$printsDir = "C:\Users\Utilizador\Downloads\MobEAD-icaro\iac\prints"
+if (-not (Test-Path $printsDir)) {
+    New-Item -ItemType Directory -Path $printsDir -Force | Out-Null
+}
+
+# Abrir navegador no servidor
+$url = "http://localhost:8090"
+Write-Host "Abrindo navegador em: $url"
+
+# Tentar abrir com Edge
+$edgePath = "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
+$chromePath = "C:\Program Files\Google\Chrome\Application\chrome.exe"
+
+$browserPath = $null
+if (Test-Path $edgePath) { $browserPath = $edgePath }
+elseif (Test-Path $chromePath) { $browserPath = $chromePath }
+
+if ($browserPath) {
+    Start-Process $browserPath -ArgumentList $url
+    Write-Host "Navegador aberto. Aguardando 5 segundos para carregar..."
+    Start-Sleep -Seconds 5
+
+    # Capturar tela inteira
+    $bounds = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+    $bitmap = New-Object System.Drawing.Bitmap($bounds.Width, $bounds.Height)
+    $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
+    $graphics.CopyFromScreen($bounds.Location, [System.Drawing.Point]::Empty, $bounds.Size)
+
+    # Salvar print
+    $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
+    $printPath = "$printsDir\print_iis_$timestamp.png"
+    $bitmap.Save($printPath, [System.Drawing.Imaging.ImageFormat]::Png)
+
+    $graphics.Dispose()
+    $bitmap.Dispose()
+
+    Write-Host "Print salvo em: $printPath"
+    Write-Host "Tamanho: $((Get-Item $printPath).Length / 1KB) KB"
+} else {
+    Write-Host "Navegador nao encontrado. Usando curl para capturar HTML."
+}
+
+# Tambem salvar o HTML como evidencia
+$htmlContent = Invoke-WebRequest -Uri $url -UseBasicParsing
+$timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
+$htmlPath = "$printsDir\evidencia_iis_$timestamp.html"
+$htmlContent.Content | Out-File -FilePath $htmlPath -Encoding UTF8
+
+# Salvar status HTTP como evidencia
+$statusPath = "$printsDir\status_http_$timestamp.txt"
+$statusInfo = @"
+=== EVIDENCIA SERVIDOR IIS - UNYLEA DEVOPS ===
+Data: $(Get-Date)
+URL: $url
+Status Code: $($htmlContent.StatusCode)
+Content Length: $($htmlContent.Content.Length) bytes
+Aluno: Icaro Galvao do Nascimento
+Curso: Unylea - Engenheiro DevOps - Unidade 4
+Container: unylea-iis (Docker)
+Porta: 8090
+Imagem: unylea-iis:latest
+===
+"@
+$statusInfo | Out-File -FilePath $statusPath -Encoding UTF8
+
+Write-Host ""
+Write-Host "=== EVIDENCIAS SALVAS ==="
+Write-Host "Print PNG: $printPath"
+Write-Host "HTML: $htmlPath"
+Write-Host "Status: $statusPath"
+Write-Host ""
+Write-Host "Status HTTP: $($htmlContent.StatusCode)"
+Write-Host "Servidor IIS funcionando!"

@@ -1,0 +1,113 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Servidor IIS - Unylea DevOps | Unidade 4</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        .container {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        }
+        h1 { font-size: 2.5em; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); margin-bottom: 10px; }
+        h2 { font-size: 1.5em; margin-bottom: 20px; opacity: 0.9; }
+        .info {
+            background: rgba(255,255,255,0.2);
+            padding: 25px;
+            margin: 25px 0;
+            border-radius: 10px;
+        }
+        .info p { margin: 8px 0; font-size: 1.1em; }
+        .tech {
+            background: rgba(76, 175, 80, 0.5);
+            padding: 12px 18px;
+            border-radius: 8px;
+            display: inline-block;
+            margin: 8px;
+            font-weight: bold;
+        }
+        .status {
+            background: rgba(40, 167, 69, 0.4);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 25px 0;
+        }
+        .status h3 { font-size: 1.4em; margin-bottom: 10px; }
+        .stack {
+            background: rgba(0, 123, 255, 0.3);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 25px 0;
+        }
+        ul { text-align: left; display: inline-block; margin-top: 10px; }
+        li { margin: 8px 0; font-size: 1.05em; }
+        footer { margin-top: 30px; opacity: 0.8; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ð Servidor IIS - Unylea DevOps!</h1>
+        <h2>Engenheiro DevOps | Unidade 4</h2>
+
+        <div class="info">
+            <p><strong>Aluno:</strong> Icaro Galvao do Nascimento</p>
+            <p><strong>Curso:</strong> Unylea - Engenheiro DevOps</p>
+            <p><strong>Unidade:</strong> 4 - Infraestrutura como CÃ³digo</p>
+            <p><strong>Status:</strong> â Servidor ativo e funcionando</p>
+            <div style="margin-top: 15px;">
+                <span class="tech">ð¥ï¸ Windows Server 2019</span>
+                <span class="tech">ð IIS</span>
+                <span class="tech">ð§ Ansible</span>
+                <span class="tech">ð¦ Docker</span>
+                <span class="tech">ðï¸ Terraform</span>
+            </div>
+        </div>
+
+        <div class="status">
+            <h3>â Status: Servidor Ativo</h3>
+            <p>Container Docker respondendo na porta 80</p>
+            <p>Nginx servindo pÃ¡gina HTML personalizada</p>
+            <p>SimulaÃ§Ã£o IIS (Windows Server 2019) funcionando</p>
+        </div>
+
+        <div class="stack">
+            <h3>ð Stack TecnolÃ³gica</h3>
+            <ul>
+                <li>â <strong>Terraform</strong> - Infraestrutura como CÃ³digo (Azure)</li>
+                <li>â <strong>Ansible</strong> - AutomaÃ§Ã£o e ConfiguraÃ§Ã£o</li>
+                <li>â <strong>Docker</strong> - ContainerizaÃ§Ã£o</li>
+                <li>â <strong>Nginx</strong> - Servidor Web</li>
+                <li>â <strong>Azure DevOps</strong> - Pipeline CI/CD</li>
+                <li>â <strong>Git</strong> - Controle de VersÃ£o</li>
+            </ul>
+        </div>
+
+        <div class="info">
+            <h3>ð¯ Endpoints DisponÃ­veis</h3>
+            <ul>
+                <li><code>/</code> - Esta pÃ¡gina (HTML)</li>
+                <li><code>/status</code> - Status do servidor (JSON)</li>
+                <li><code>/iis</code> - SimulaÃ§Ã£o IIS (JSON)</li>
+            </ul>
+        </div>
+
+        <footer>
+            <p><em>Provisionado via Docker + Nginx</em></p>
+            <p><small>Infraestrutura como CÃ³digo - Unylea DevOps Unidade 4</small></p>
+        </footer>
+    </div>
+</body>
+</html>

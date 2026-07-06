@@ -1,0 +1,98 @@
+﻿---
+- name: Instalar e configurar IIS no Windows Server 2019 (Azure)
+  hosts: windows
+  gather_facts: yes
+  vars:
+    ansible_winrm_operation_timeout_sec: 120
+    ansible_winrm_read_timeout_sec: 150
+
+  tasks:
+    - name: Exibir informacoes do sistema Azure
+      ansible.windows.win_shell: |
+        Write-Output "Hostname: $env:COMPUTERNAME"
+        Write-Output "OS: $((Get-CimInstance Win32_OperatingSystem).Caption)"
+        Write-Output "Location: Azure VM"
+      register: system_info
+
+    - name: Mostrar informacoes do sistema
+      ansible.builtin.debug:
+        var: system_info.stdout_lines
+
+    - name: Instalar IIS completo com todas as features
+      ansible.windows.win_feature:
+        name:
+          - Web-Server
+          - Web-WebServer
+          - Web-Common-Http
+          - Web-Default-Doc
+          - Web-Dir-Browsing
+          - Web-Http-Errors
+          - Web-Static-Content
+          - Web-Health
+          - Web-Http-Logging
+          - Web-Performance
+          - Web-Stat-Compression
+          - Web-Security
+          - Web-Filtering
+          - Web-App-Dev
+          - Web-ISAPI-Ext
+          - Web-ISAPI-Filter
+          - Web-Mgmt-Tools
+          - Web-Mgmt-Console
+        state: present
+        include_management_tools: yes
+      register: iis_install
+
+    - name: Exibir resultado da instalacao
+      ansible.builtin.debug:
+        var: iis_install
+
+    - name: Iniciar servico W3SVC
+      ansible.windows.win_service:
+        name: W3SVC
+        state: started
+        start_mode: auto
+
+    - name: Criar pagina HTML personalizada Azure
+      ansible.windows.win_copy:
+        content: |
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <title>IIS - Unylea DevOps | Azure</title>
+              <style>
+                  body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; background: #f0f2f5; }
+                  .box { background: white; padding: 40px; border-radius: 10px; display: inline-block; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+                  h1 { color: #0078d4; }
+                  h2 { color: #107c10; }
+                  .azure { color: #0078d4; font-weight: bold; }
+                  .info { color: #5f6368; margin-top: 20px; }
+              </style>
+          </head>
+          <body>
+              <div class="box">
+                  <h1>Servidor IIS Instalado com Sucesso!</h1>
+                  <h2>Unylea | Engenheiro DevOps | Unidade 4</h2>
+                  <p class="info"><strong>Aluno:</strong> Icaro Galvao do Nascimento</p>
+                  <p class="info"><strong>Plataforma:</strong> <span class="azure">Microsoft Azure</span></p>
+                  <p class="info"><strong>Ferramentas:</strong> Terraform + Ansible + Azure</p>
+                  <p class="info"><strong>Data:</strong> {{ ansible_date_time.date }}</p>
+                  <p class="info"><strong>Hostname:</strong> {{ ansible_hostname }}</p>
+              </div>
+          </body>
+          </html>
+        dest: C:\inetpub\wwwroot\index.html
+
+    - name: Verificar se o IIS esta respondendo na porta 80
+      ansible.windows.win_uri:
+        url: http://localhost
+        return_content: yes
+      register: iis_response
+
+    - name: Exibir resposta do IIS
+      ansible.builtin.debug:
+        msg: "IIS respondendo com HTTP {{ iis_response.status }} - Instalacao Azure validada!"
+
+    - name: Resultado final Azure
+      ansible.builtin.debug:
+        msg: "Playbook Azure executado com sucesso. IIS instalado e configurado na VM Azure."

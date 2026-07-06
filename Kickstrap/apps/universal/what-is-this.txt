@@ -1,4 +1,4 @@
-Some of your apps will require the same dependencies to be loaded before they can run. jQuery UI is a good example of this. 
+﻿Some of your apps will require the same dependencies to be loaded before they can run. jQuery UI is a good example of this. 
 Instead of having multiple copies of jQUI in each of those app folder, just put them in universal.
 
 Kickstrap will load all universal files first, then it looks in your apps, loads the required dependencies in your apps. For each app whose required resources are loaded, its 
